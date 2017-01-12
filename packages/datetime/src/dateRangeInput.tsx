@@ -5,6 +5,7 @@
  * and https://github.com/palantir/blueprint/blob/master/PATENTS
  */
 
+import * as moment from "moment";
 import * as React from "react";
 
 import {
@@ -14,6 +15,7 @@ import {
     InputGroup,
     Intent,
     IProps,
+    Popover,
     Position,
 } from "@blueprintjs/core";
 
@@ -23,6 +25,7 @@ import {
     getDefaultMinDate,
     IDatePickerBaseProps,
 } from "./datePickerCore";
+import { DateRangePicker } from "./dateRangePicker";
 
 export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
     /**
@@ -99,7 +102,7 @@ export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
      * If an array, the custom shortcuts provided will be displayed.
      * @default true
      */
-    // shortcuts?: boolean | IDateRangeShortcut[];
+    shortcuts?: boolean | IDateRangeShortcut[];
 
     /**
      * The currently selected DateRange.
@@ -109,10 +112,12 @@ export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
 }
 
 export interface IDateRangeInputState {
-    value?: DateRange;
-    valueString?: string;
-    isInputFocused?: boolean;
+    endDateValue?: moment.Moment;
+    endDateValueString?: string;
+    isInputFocused?: boolean; // TODO: split into isStartDateInputFocused and isEndDateInputFocused?
     isOpen?: boolean;
+    startDateValue?: moment.Moment;
+    startDateValueString?: string;
 }
 
 export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDateRangeInputState> {
@@ -125,35 +130,118 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         minDate: getDefaultMinDate(),
         openOnFocus: true,
         outOfRangeMessage: "Out of range",
-        popoverPosition: Position.BOTTOM,
+        popoverPosition: Position.BOTTOM_LEFT,
+        shortcuts: true,
     };
 
     public displayName = "Blueprint.DateRangeInput";
 
+    private startDateInputRef: HTMLElement = null;
+    private endDateInputRef: HTMLElement = null;
+
+    public constructor(props: IDateRangeInputProps, context?: any) {
+        super(props, context);
+
+        this.state = {
+            endDateValue: null,
+            endDateValueString: null,
+            isInputFocused: false,
+            isOpen: false,
+            startDateValue: null,
+            startDateValueString: null,
+        };
+    }
+
     public render() {
-        const calendarIcon = (
-            <Button
-                className={Classes.MINIMAL}
-                disabled={this.props.disabled}
-                iconName="calendar"
-                intent={Intent.PRIMARY}
+        const popoverContent = (
+            <DateRangePicker
+                allowSingleDayRange={this.props.allowSingleDayRange}
+                onChange={this.handleDateRangeChange}
+                shortcuts={this.props.shortcuts}
+                value={this.state.value}
             />
         );
 
+        const { format } = this.props;
+        const { startDateValue, endDateValue } = this.state;
+        const startDateString = (startDateValue != null) ? startDateValue.format(format) : "";
+        const endDateString = (endDateValue != null) ? endDateValue.format(format) : "";
+
         return (
-            <InputGroup
-                className={"pt-daterangeinput"}
-                disabled={this.props.disabled}
-                type="text"
-                onChange={this.onChange}
-                placeholder={this.props.format}
-                rightElement={calendarIcon}
-                value={"01/17/2017 to 02/04/2017"}
-            />
+            <Popover
+                autoFocus={false}
+                content={popoverContent}
+                enforceFocus={false}
+                inline={true}
+                isOpen={this.state.isOpen}
+                onClose={this.handleClosePopover}
+                popoverClassName={"pt-daterangeinput-popover"}
+                position={Position.BOTTOM_LEFT}
+                // useSmartArrowPositioning={false} // TODO: move the arrow based on which field is focused?
+            >
+                <div className={Classes.CONTROL_GROUP}>
+                    <input
+                        className={Classes.INPUT}
+                        disabled={this.props.disabled}
+                        onBlur={this.handleStartDateInputBlur}
+                        onClick={this.handleInputClick}
+                        onFocus={this.handleStartDateInputFocus}
+                        placeholder="Start date"
+                        ref={this.setStartDateInputRef}
+                        type="text"
+                        value={startDateString}
+                    />
+                    <input
+                        className={Classes.INPUT}
+                        disabled={this.props.disabled}
+                        onBlur={this.handleEndDateInputBlur}
+                        onClick={this.handleInputClick}
+                        onFocus={this.handleEndDateInputFocus}
+                        placeholder="End date"
+                        ref={this.setEndDateInputRef}
+                        type="text"
+                        value={endDateString}
+                    />
+                </div>
+            </Popover>
         );
     }
 
-    private onChange = () => {
-        return;
+    private setStartDateInputRef = (el: HTMLElement) => {
+        this.startDateInputRef = el;
+    }
+
+    private setEndDateInputRef = (el: HTMLElement) => {
+        this.endDateInputRef = el;
+    }
+
+    private handleStartDateInputFocus = () => {
+        this.setState({ isOpen: true, isStartDateInputFocused: true });
+    }
+
+    private handleEndDateInputFocus = () => {
+        this.setState({ isOpen: true, isEndDateInputFocused: true });
+    }
+
+    private handleStartDateInputBlur = () => {
+        this.setState({ isStartDateInputFocused: false });
+    }
+
+    private handleEndDateInputBlur = () => {
+        this.setState({ isEndDateInputFocused: false });
+    }
+
+    private handleInputClick = (e: React.SyntheticEvent<HTMLInputElement>) => {
+        e.stopPropagation();
+    }
+
+    private handleClosePopover = () => {
+        this.setState({ isOpen: false });
+    }
+
+    private handleDateRangeChange = (dateRange: DateRange) => {
+        const startDate = (dateRange[0]) ? moment(dateRange[0]) : null;
+        const endDate = (dateRange[1]) ? moment(dateRange[1]) : null;
+        this.setState({ startDateValue: startDate, endDateValue: endDate });
     }
 }
