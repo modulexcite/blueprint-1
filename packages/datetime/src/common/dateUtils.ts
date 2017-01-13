@@ -5,6 +5,8 @@
  * and https://github.com/palantir/blueprint/blob/master/PATENTS
  */
 
+import * as moment from "moment";
+
 export type DateRange = [Date | undefined, Date | undefined];
 
 export function areEqual(date1: Date, date2: Date) {
@@ -100,4 +102,24 @@ export function getDateBetween(dateRange: DateRange) {
 export function getDateTime(date: Date, time: Date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(),
            time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());
+}
+
+/**
+ * Translate a moment into a Date object, adjusting the moment timezone into the local one.
+ * This is a no-op unless moment-timezone's setDefault has been called.
+ */
+export function fromMomentToDate(momentDate: moment.Moment) {
+    if (momentDate == null) {
+        return undefined;
+    } else {
+        return new Date(
+            momentDate.year(),
+            momentDate.month(),
+            momentDate.date(),
+            momentDate.hours(),
+            momentDate.minutes(),
+            momentDate.seconds(),
+            momentDate.milliseconds(),
+        );
+    }
 }

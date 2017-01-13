@@ -10,22 +10,23 @@ import * as React from "react";
 
 import {
     AbstractComponent,
-    Button,
+    // Button,
     Classes,
-    InputGroup,
-    Intent,
+    // InputGroup,
+    // Intent,
     IProps,
     Popover,
     Position,
+    // Utils,
 } from "@blueprintjs/core";
 
-import { DateRange } from "./common/dateUtils";
+import { DateRange/*, fromMomentToDate*/ } from "./common/dateUtils";
 import {
     getDefaultMaxDate,
     getDefaultMinDate,
     IDatePickerBaseProps,
 } from "./datePickerCore";
-import { DateRangePicker } from "./dateRangePicker";
+import { DateRangePicker, IDateRangeShortcut } from "./dateRangePicker";
 
 export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
     /**
@@ -112,12 +113,15 @@ export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
 }
 
 export interface IDateRangeInputState {
-    endDateValue?: moment.Moment;
-    endDateValueString?: string;
-    isInputFocused?: boolean; // TODO: split into isStartDateInputFocused and isEndDateInputFocused?
     isOpen?: boolean;
+
+    isStartDateInputFocused?: boolean;
     startDateValue?: moment.Moment;
     startDateValueString?: string;
+
+    isEndDateInputFocused?: boolean;
+    endDateValue?: moment.Moment;
+    endDateValueString?: string;
 }
 
 export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDateRangeInputState> {
@@ -145,8 +149,9 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         this.state = {
             endDateValue: null,
             endDateValueString: null,
-            isInputFocused: false,
+            isEndDateInputFocused: false,
             isOpen: false,
+            isStartDateInputFocused: false,
             startDateValue: null,
             startDateValueString: null,
         };
@@ -158,14 +163,17 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                 allowSingleDayRange={this.props.allowSingleDayRange}
                 onChange={this.handleDateRangeChange}
                 shortcuts={this.props.shortcuts}
-                value={this.state.value}
+                value={this.getDateRangeValue()}
             />
         );
 
-        const { format } = this.props;
-        const { startDateValue, endDateValue } = this.state;
-        const startDateString = (startDateValue != null) ? startDateValue.format(format) : "";
-        const endDateString = (endDateValue != null) ? endDateValue.format(format) : "";
+        const startDateString = (this.state.isStartDateInputFocused)
+            ? this.state.startDateValueString
+            : this.getDateString(this.state.startDateValue);
+
+        const endDateString = (this.state.isEndDateInputFocused)
+            ? this.state.endDateValueString
+            : this.getDateString(this.state.endDateValue);
 
         return (
             <Popover
@@ -184,6 +192,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                         className={Classes.INPUT}
                         disabled={this.props.disabled}
                         onBlur={this.handleStartDateInputBlur}
+                        onChange={this.handleStartDateInputChange}
                         onClick={this.handleInputClick}
                         onFocus={this.handleStartDateInputFocus}
                         placeholder="Start date"
@@ -195,6 +204,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                         className={Classes.INPUT}
                         disabled={this.props.disabled}
                         onBlur={this.handleEndDateInputBlur}
+                        onChange={this.handleEndDateInputChange}
                         onClick={this.handleInputClick}
                         onFocus={this.handleEndDateInputFocus}
                         placeholder="End date"
@@ -215,6 +225,24 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         this.endDateInputRef = el;
     }
 
+    private getDateRangeValue = () => {
+        return [
+            (this.state.startDateValue == null) ? null : this.state.startDateValue.toDate(),
+            (this.state.endDateValue == null) ? null : this.state.endDateValue.toDate(),
+        ] as DateRange;
+    }
+
+    private getDateString = (value: moment.Moment) => {
+        if (value == null) {
+            return "";
+        }
+        return value.format(this.props.format);
+    }
+
+    private dateIsInRange(value: moment.Moment) {
+        return value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
+    }
+
     private handleStartDateInputFocus = () => {
         this.setState({ isOpen: true, isStartDateInputFocused: true });
     }
@@ -229,6 +257,31 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     private handleEndDateInputBlur = () => {
         this.setState({ isEndDateInputFocused: false });
+    }
+
+    private handleStartDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+        const valueString = (e.target as HTMLInputElement).value;
+        this.updateFromInputChange(valueString, "startDateValue", "startDateValueString");
+    }
+
+    private handleEndDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+        const valueString = (e.target as HTMLInputElement).value;
+        this.updateFromInputChange(valueString, "endDateValue", "endDateValueString");
+    }
+
+    private updateFromInputChange = (valueString: string, valuePropName: string, valueStringPropName: string) => {
+        const value = moment(valueString, this.props.format);
+
+        if (value.isValid() && this.dateIsInRange(value)) {
+            if (this.props.value === undefined) {
+                this.setState({ [valuePropName]: value, [valueStringPropName]: valueString });
+            } else {
+                this.setState({ [valueStringPropName]: valueString });
+            }
+            // TODO: Utils.safeInvoke(this.props.onChange, fromMomentToDate(value));
+        } else {
+            this.setState({ [valueStringPropName]: valueString });
+        }
     }
 
     private handleInputClick = (e: React.SyntheticEvent<HTMLInputElement>) => {
