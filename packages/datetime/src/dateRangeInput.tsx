@@ -266,26 +266,26 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     private handleStartDateInputBlur = () => {
         const valueString = this.state.startDateValueString;
-        this.updateFromInputBlur(valueString, "startDateValue", "startDateValueString", "isStartDateInputFocused");
+        this.handleGenericInputBlur(valueString, "startDateValue", "startDateValueString", "isStartDateInputFocused");
     }
 
     private handleEndDateInputBlur = () => {
         const valueString = this.state.endDateValueString;
-        this.updateFromInputBlur(valueString, "endDateValue", "endDateValueString", "isEndDateInputFocused");
+        this.handleGenericInputBlur(valueString, "endDateValue", "endDateValueString", "isEndDateInputFocused");
     }
 
     private handleStartDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
         const valueString = (e.target as HTMLInputElement).value;
-        this.updateFromInputChange(valueString, "startDateValue", "startDateValueString");
+        this.handleGenericInputChange(valueString, "startDateValue", "startDateValueString");
     }
 
     private handleEndDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
         const valueString = (e.target as HTMLInputElement).value;
-        this.updateFromInputChange(valueString, "endDateValue", "endDateValueString");
+        this.handleGenericInputChange(valueString, "endDateValue", "endDateValueString");
     }
 
-    private updateFromInputBlur =
-        (valueString: string, valuePropName: string, valueStringPropName: string, focusPropName: string) => {
+    private handleGenericInputBlur =
+        (valueString: string, valueKey: string, valueStringKey: string, focusStatusKey: string) => {
 
         const value = moment(valueString, this.props.format);
 
@@ -299,15 +299,15 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
         if (isInputEmpty) {
             this.setState({
-                [focusPropName]: false,
-                [valuePropName]: moment(null),
-                [valueStringPropName]: null,
+                [focusStatusKey]: false,
+                [valueKey]: moment(null),
+                [valueStringKey]: null,
             });
         } else if (didInputChangeToInvalidState) {
             if (this.props.value === undefined) {
-                this.setState({ [focusPropName]: false, [valuePropName]: value, [valueStringPropName]: null });
+                this.setState({ [focusStatusKey]: false, [valueKey]: value, [valueStringKey]: null });
             } else {
-                this.setState({ [focusPropName]: false });
+                this.setState({ [focusStatusKey]: false });
             }
 
             if (isValueInvalid) {
@@ -318,23 +318,23 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                 // TODO: Call onChange with value
             }
         } else {
-            this.setState({ [focusPropName]: false });
+            this.setState({ [focusStatusKey]: false });
         }
     }
 
-    private updateFromInputChange = (valueString: string, valuePropName: string, valueStringPropName: string) => {
+    private handleGenericInputChange = (valueString: string, valueKey: string, valueStringKey: string) => {
         const value = moment(valueString, this.props.format);
         if (valueString.length === 0) {
-            this.setState({ [valuePropName]: null, [valueStringPropName]: "" });
+            this.setState({ [valueKey]: null, [valueStringKey]: "" });
         } else if (value.isValid() && this.dateIsInRange(value)) {
             if (this.props.value === undefined) {
-                this.setState({ [valuePropName]: value, [valueStringPropName]: valueString });
+                this.setState({ [valueKey]: value, [valueStringKey]: valueString });
             } else {
-                this.setState({ [valueStringPropName]: valueString });
+                this.setState({ [valueStringKey]: valueString });
             }
             // TODO: Utils.safeInvoke(this.props.onChange, fromMomentToDate(value));
         } else {
-            this.setState({ [valueStringPropName]: valueString });
+            this.setState({ [valueStringKey]: valueString });
         }
     }
 
