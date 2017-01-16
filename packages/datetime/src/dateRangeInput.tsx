@@ -148,12 +148,12 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
         this.state = {
             endDateValue: null,
-            endDateValueString: null,
+            endDateValueString: "",
             isEndDateInputFocused: false,
             isOpen: false,
             isStartDateInputFocused: false,
             startDateValue: null,
-            startDateValueString: null,
+            startDateValueString: "",
         };
     }
 
@@ -279,8 +279,9 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     private updateFromInputChange = (valueString: string, valuePropName: string, valueStringPropName: string) => {
         const value = moment(valueString, this.props.format);
-
-        if (value.isValid() && this.dateIsInRange(value)) {
+        if (valueString.length === 0) {
+            this.setState({ [valuePropName]: null, [valueStringPropName]: "" });
+        } else if (value.isValid() && this.dateIsInRange(value)) {
             if (this.props.value === undefined) {
                 this.setState({ [valuePropName]: value, [valueStringPropName]: valueString });
             } else {
@@ -301,8 +302,15 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private handleDateRangeChange = (dateRange: DateRange) => {
-        const startDate = (dateRange[0]) ? moment(dateRange[0]) : null;
-        const endDate = (dateRange[1]) ? moment(dateRange[1]) : null;
-        this.setState({ startDateValue: startDate, endDateValue: endDate });
+        const { format } = this.props;
+        const [startDate, endDate] = dateRange;
+
+        const startDateValue = (startDate) ? moment(startDate) : null;
+        const endDateValue = (endDate) ? moment(endDate) : null;
+
+        const startDateValueString = (startDate) ? startDateValue.format(format) : "";
+        const endDateValueString = (endDate) ? endDateValue.format(format) : "";
+
+        this.setState({ startDateValue, endDateValue, startDateValueString, endDateValueString });
     }
 }
