@@ -169,11 +169,11 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
         const startDateString = (this.state.isStartDateInputFocused)
             ? this.state.startDateValueString
-            : this.getDateString(this.state.startDateValue);
+            : this.getDateStringForDisplay(this.state.startDateValue);
 
         const endDateString = (this.state.isEndDateInputFocused)
             ? this.state.endDateValueString
-            : this.getDateString(this.state.endDateValue);
+            : this.getDateStringForDisplay(this.state.endDateValue);
 
         const startDatePlaceholder = (this.state.isStartDateInputFocused)
             ? moment(this.props.minDate).format(this.props.format)
@@ -240,11 +240,16 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         ] as DateRange;
     }
 
-    private getDateString = (value: moment.Moment) => {
+    private getDateStringForDisplay = (value: moment.Moment) => {
         if (value == null) {
             return "";
+        } else if (!value.isValid()) {
+            return this.props.invalidDateRangeMessage;
+        } else if (!this.dateIsInRange(value)) {
+            return this.props.outOfRangeMessage;
+        } else {
+            return value.format(this.props.format);
         }
-        return value.format(this.props.format);
     }
 
     private dateIsInRange(value: moment.Moment) {
@@ -260,11 +265,13 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private handleStartDateInputBlur = () => {
-        this.setState({ isStartDateInputFocused: false });
+        const valueString = this.state.startDateValueString;
+        this.updateFromInputBlur(valueString, "startDateValue", "startDateValueString", "isStartDateInputFocused");
     }
 
     private handleEndDateInputBlur = () => {
-        this.setState({ isEndDateInputFocused: false });
+        const valueString = this.state.endDateValueString;
+        this.updateFromInputBlur(valueString, "endDateValue", "endDateValueString", "isEndDateInputFocused");
     }
 
     private handleStartDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -275,6 +282,44 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     private handleEndDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
         const valueString = (e.target as HTMLInputElement).value;
         this.updateFromInputChange(valueString, "endDateValue", "endDateValueString");
+    }
+
+    private updateFromInputBlur =
+        (valueString: string, valuePropName: string, valueStringPropName: string, focusPropName: string) => {
+
+        const value = moment(valueString, this.props.format);
+
+        const isValueInvalid = !value.isValid();
+        const isValueOutOfRange = !this.dateIsInRange(value);
+        const isValueStringOutOfSync = valueString !== this.getDateStringForDisplay(this.state.startDateValue);
+
+        const isInputEmpty = valueString.length === 0;
+        const didInputChangeToInvalidState =
+            !isInputEmpty && isValueStringOutOfSync && (isValueInvalid || isValueOutOfRange);
+
+        if (isInputEmpty) {
+            this.setState({
+                [focusPropName]: false,
+                [valuePropName]: moment(null),
+                [valueStringPropName]: null,
+            });
+        } else if (didInputChangeToInvalidState) {
+            if (this.props.value === undefined) {
+                this.setState({ [focusPropName]: false, [valuePropName]: value, [valueStringPropName]: null });
+            } else {
+                this.setState({ [focusPropName]: false });
+            }
+
+            if (isValueInvalid) {
+                // TODO: Call onError with an empty date
+            } else if (isValueOutOfRange) {
+                // TODO: Call onError with value
+            } else {
+                // TODO: Call onChange with value
+            }
+        } else {
+            this.setState({ [focusPropName]: false });
+        }
     }
 
     private updateFromInputChange = (valueString: string, valuePropName: string, valueStringPropName: string) => {
