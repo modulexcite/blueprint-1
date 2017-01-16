@@ -175,6 +175,14 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             ? this.state.endDateValueString
             : this.getDateString(this.state.endDateValue);
 
+        const startDatePlaceholder = (this.state.isStartDateInputFocused)
+            ? moment(this.props.minDate).format(this.props.format)
+            : "Start date";
+
+        const endDatePlaceholder = (this.state.isEndDateInputFocused)
+            ? moment(this.props.maxDate).format(this.props.format)
+            : "End date";
+
         return (
             <Popover
                 autoFocus={false}
@@ -195,7 +203,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                         onChange={this.handleStartDateInputChange}
                         onClick={this.handleInputClick}
                         onFocus={this.handleStartDateInputFocus}
-                        placeholder="Start date"
+                        placeholder={startDatePlaceholder}
                         ref={this.setStartDateInputRef}
                         type="text"
                         value={startDateString}
@@ -207,7 +215,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                         onChange={this.handleEndDateInputChange}
                         onClick={this.handleInputClick}
                         onFocus={this.handleEndDateInputFocus}
-                        placeholder="End date"
+                        placeholder={endDatePlaceholder}
                         ref={this.setEndDateInputRef}
                         type="text"
                         value={endDateString}
