@@ -146,26 +146,31 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     public constructor(props: IDateRangeInputProps, context?: any) {
         super(props, context);
 
+        const [defaultStartDateValue, defaultEndDateValue] = this.getDefaultDateRange();
+
+        const startDateValue = (this.props.value !== undefined && this.props.value[0] != null)
+            ? this.fromDateToMoment(this.props.value[0])
+            : defaultStartDateValue;
+
+        const endDateValue = (this.props.value !== undefined && this.props.value[1] != null)
+            ? this.fromDateToMoment(this.props.value[1])
+            : defaultEndDateValue;
+
         this.state = {
-            endDateValue: null,
-            endDateValueString: "",
+            endDateValue,
+            endDateValueString: null,
             isEndDateInputFocused: false,
             isOpen: false,
             isStartDateInputFocused: false,
-            startDateValue: null,
-            startDateValueString: "",
+            startDateValue,
+            startDateValueString: null,
         };
     }
 
     public render() {
-        const popoverContent = (
-            <DateRangePicker
-                allowSingleDayRange={this.props.allowSingleDayRange}
-                onChange={this.handleDateRangeChange}
-                shortcuts={this.props.shortcuts}
-                value={this.getDateRangeValue()}
-            />
-        );
+        const { format } = this.props;
+
+        // Date strings
 
         const startDateString = (this.state.isStartDateInputFocused)
             ? this.state.startDateValueString
@@ -175,13 +180,34 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             ? this.state.endDateValueString
             : this.getDateStringForDisplay(this.state.endDateValue);
 
+        // Date values
+
+        // const startDateValue = (this.state.isStartDateInputFocused)
+        //     ? moment(this.state.startDateValueString, format)
+        //     : this.state.startDateValue;
+
+        // const endDateValue = (this.state.isEndDateInputFocused)
+        //     ? moment(this.state.endDateValueString, format)
+        //     : this.state.endDateValue;
+
+        // Placeholders
+
         const startDatePlaceholder = (this.state.isStartDateInputFocused)
-            ? moment(this.props.minDate).format(this.props.format)
+            ? moment(this.props.minDate).format(format)
             : "Start date";
 
         const endDatePlaceholder = (this.state.isEndDateInputFocused)
-            ? moment(this.props.maxDate).format(this.props.format)
+            ? moment(this.props.maxDate).format(format)
             : "End date";
+
+        const popoverContent = (
+            <DateRangePicker
+                allowSingleDayRange={this.props.allowSingleDayRange}
+                onChange={this.handleDateRangeChange}
+                shortcuts={this.props.shortcuts}
+                value={this.getCurrentDateRange()}
+            />
+        );
 
         return (
             <Popover
@@ -233,15 +259,29 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         this.endDateInputRef = el;
     }
 
-    private getDateRangeValue = () => {
-        return [
-            (this.state.startDateValue == null) ? null : this.state.startDateValue.toDate(),
-            (this.state.endDateValue == null) ? null : this.state.endDateValue.toDate(),
-        ] as DateRange;
+    private getDefaultDateRange = () => {
+        const defaultDateRange = this.props.defaultValue;
+        return (defaultDateRange != null)
+            ? [this.fromDateToMoment(defaultDateRange[0]), this.fromDateToMoment(defaultDateRange[1])]
+            : [moment(null), moment(null)];
+    }
+
+    private isDateValidAndInRange(value: moment.Moment) {
+        return value.isValid() && this.dateIsInRange(value);
+    }
+
+    private getCurrentDateRange = () => {
+        const startDate = this.isDateValidAndInRange(this.state.startDateValue)
+                ? this.fromMomentToDate(this.state.startDateValue)
+                : null;
+        const endDate = this.isDateValidAndInRange(this.state.endDateValue)
+                ? this.fromMomentToDate(this.state.endDateValue)
+                : null;
+        return [startDate, endDate] as DateRange;
     }
 
     private getDateStringForDisplay = (value: moment.Moment) => {
-        if (value == null) {
+        if (this.isNull(value)) {
             return "";
         } else if (!value.isValid()) {
             return this.props.invalidDateRangeMessage;
@@ -252,16 +292,58 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         }
     }
 
+    private isNull(value: moment.Moment) {
+        return value.parsingFlags().nullInput;
+    }
+
     private dateIsInRange(value: moment.Moment) {
         return value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
     }
 
+    /**
+     * Translate a moment into a Date object, adjusting the moment timezone into the local one.
+     * This is a no-op unless moment-timezone's setDefault has been called.
+     */
+    private fromMomentToDate = (momentDate: moment.Moment) => {
+        if (momentDate == null) {
+            return undefined;
+        } else {
+            return new Date(
+                momentDate.year(),
+                momentDate.month(),
+                momentDate.date(),
+                momentDate.hours(),
+                momentDate.minutes(),
+                momentDate.seconds(),
+                momentDate.milliseconds(),
+            );
+        }
+    }
+    /**
+     * Translate a Date object into a moment, adjusting the local timezone into the moment one.
+     * This is a no-op unless moment-timezone's setDefault has been called.
+     */
+    private fromDateToMoment = (date: Date) => {
+        if (date == null || typeof date === "string") {
+            return moment(date);
+        } else {
+            return moment([
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes(),
+                date.getSeconds(),
+                date.getMilliseconds(),
+            ]);
+        }
+    }
     private handleStartDateInputFocus = () => {
-        this.setState({ isOpen: true, isStartDateInputFocused: true });
+        this.handleGenericInputFocus(this.state.startDateValue, "startDateValueString", "isStartDateInputFocused");
     }
 
     private handleEndDateInputFocus = () => {
-        this.setState({ isOpen: true, isEndDateInputFocused: true });
+        this.handleGenericInputFocus(this.state.endDateValue, "endDateValueString", "isEndDateInputFocused");
     }
 
     private handleStartDateInputBlur = () => {
@@ -282,6 +364,18 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     private handleEndDateInputChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
         const valueString = (e.target as HTMLInputElement).value;
         this.handleGenericInputChange(valueString, "endDateValue", "endDateValueString");
+    }
+
+    private handleGenericInputFocus = (value: moment.Moment, valueStringKey: string, focusStateKey: string) => {
+        const valueString = this.isNull(value)
+            ? ""
+            : value.format(this.props.format);
+
+        if (this.props.openOnFocus) {
+            this.setState({ [focusStateKey]: true, [valueStringKey]: valueString, isOpen: true });
+        } else {
+            this.setState({ [focusStateKey]: true, [valueStringKey]: valueString });
+        }
     }
 
     private handleGenericInputBlur =
@@ -350,8 +444,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         const { format } = this.props;
         const [startDate, endDate] = dateRange;
 
-        const startDateValue = (startDate) ? moment(startDate) : null;
-        const endDateValue = (endDate) ? moment(endDate) : null;
+        const startDateValue = this.fromDateToMoment(startDate);
+        const endDateValue = this.fromDateToMoment(endDate);
 
         const startDateValueString = (startDate) ? startDateValue.format(format) : "";
         const endDateValueString = (endDate) ? endDateValue.format(format) : "";
