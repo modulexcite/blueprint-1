@@ -60,7 +60,7 @@ export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
      * The error message to display when the date selected invalid.
      * @default "Invalid date"
      */
-    invalidDateRangeMessage?: string;
+    invalidDateMessage?: string;
 
     /**
      * Called when the user selects a day.
@@ -129,7 +129,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         allowSingleDayRange: false,
         disabled: false,
         format: "YYYY-MM-DD",
-        invalidDateRangeMessage: "Invalid date range",
+        invalidDateMessage: "Invalid date",
         maxDate: getDefaultMaxDate(),
         minDate: getDefaultMinDate(),
         openOnFocus: true,
@@ -284,7 +284,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         if (this.isNull(value)) {
             return "";
         } else if (!value.isValid()) {
-            return this.props.invalidDateRangeMessage;
+            return this.props.invalidDateMessage;
         } else if (!this.dateIsInRange(value)) {
             return this.props.outOfRangeMessage;
         } else {
