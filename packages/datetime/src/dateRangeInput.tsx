@@ -168,6 +168,14 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         };
     }
 
+    public componentDidUpdate() {
+        if (this.state.isStartDateInputFocused && document.activeElement !== this.startDateInputRef) {
+            this.startDateInputRef.focus();
+        } else if (this.state.isEndDateInputFocused && document.activeElement !== this.endDateInputRef) {
+            this.endDateInputRef.focus();
+        }
+    }
+
     public render() {
         const { format } = this.props;
 
@@ -261,7 +269,6 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             </Popover>
         );
     }
-
     private setStartDateInputRef = (el: HTMLElement) => {
         this.startDateInputRef = el;
     }
@@ -461,6 +468,29 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         const startDateValueString = (startDate) ? startDateValue.format(format) : "";
         const endDateValueString = (endDate) ? endDateValue.format(format) : "";
 
-        this.setState({ startDateValue, endDateValue, startDateValueString, endDateValueString });
+        let isStartDateInputFocused: boolean;
+        let isEndDateInputFocused: boolean;
+
+        if (startDate == null) {
+            isStartDateInputFocused = true;
+            isEndDateInputFocused = false;
+        } else if (endDate == null) {
+            isStartDateInputFocused = false;
+            isEndDateInputFocused = true;
+        } else {
+            // the date range is fully defined, so no further user input is
+            // immediately required.
+            isStartDateInputFocused = false;
+            isEndDateInputFocused = false;
+        }
+
+        this.setState({
+            endDateValue,
+            endDateValueString,
+            isEndDateInputFocused,
+            isStartDateInputFocused,
+            startDateValue,
+            startDateValueString,
+        });
     }
 }
