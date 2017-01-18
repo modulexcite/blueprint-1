@@ -212,11 +212,11 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         // Classes
 
         const startDateInputClasses = classNames(Classes.INPUT, {
-            "pt-intent-danger": !(this.isDateValidAndInRange(startDateValue) || this.isNull(startDateValue) || startDateString === ""),
+            "pt-intent-danger": this.shouldInputHaveErrorClass(startDateValue, startDateString),
         });
 
         const endDateInputClasses = classNames(Classes.INPUT, {
-            "pt-intent-danger": !(this.isDateValidAndInRange(endDateValue) || this.isNull(endDateValue) || endDateString === ""),
+            "pt-intent-danger": this.shouldInputHaveErrorClass(endDateValue, endDateString),
         });
 
         const popoverContent = (
@@ -282,6 +282,10 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         return (defaultDateRange != null)
             ? [this.fromDateToMoment(defaultDateRange[0]), this.fromDateToMoment(defaultDateRange[1])]
             : [moment(null), moment(null)];
+    }
+
+    private shouldInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
+        return !(this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "");
     }
 
     private isDateValidAndInRange(value: moment.Moment) {
