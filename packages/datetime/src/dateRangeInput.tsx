@@ -5,6 +5,7 @@
  * and https://github.com/palantir/blueprint/blob/master/PATENTS
  */
 
+import * as classNames from "classnames";
 import * as moment from "moment";
 import * as React from "react";
 
@@ -182,13 +183,13 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
         // Date values
 
-        // const startDateValue = (this.state.isStartDateInputFocused)
-        //     ? moment(this.state.startDateValueString, format)
-        //     : this.state.startDateValue;
+        const startDateValue = (this.state.isStartDateInputFocused)
+            ? moment(this.state.startDateValueString, format)
+            : this.state.startDateValue;
 
-        // const endDateValue = (this.state.isEndDateInputFocused)
-        //     ? moment(this.state.endDateValueString, format)
-        //     : this.state.endDateValue;
+        const endDateValue = (this.state.isEndDateInputFocused)
+            ? moment(this.state.endDateValueString, format)
+            : this.state.endDateValue;
 
         // Placeholders
 
@@ -199,6 +200,16 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         const endDatePlaceholder = (this.state.isEndDateInputFocused)
             ? moment(this.props.maxDate).format(format)
             : "End date";
+
+        // Classes
+
+        const startDateInputClasses = classNames(Classes.INPUT, {
+            "pt-intent-danger": !(this.isDateValidAndInRange(startDateValue) || this.isNull(startDateValue) || startDateString === ""),
+        });
+
+        const endDateInputClasses = classNames(Classes.INPUT, {
+            "pt-intent-danger": !(this.isDateValidAndInRange(endDateValue) || this.isNull(endDateValue) || endDateString === ""),
+        });
 
         const popoverContent = (
             <DateRangePicker
@@ -223,7 +234,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             >
                 <div className={Classes.CONTROL_GROUP}>
                     <input
-                        className={Classes.INPUT}
+                        className={startDateInputClasses}
                         disabled={this.props.disabled}
                         onBlur={this.handleStartDateInputBlur}
                         onChange={this.handleStartDateInputChange}
@@ -235,7 +246,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                         value={startDateString}
                     />
                     <input
-                        className={Classes.INPUT}
+                        className={endDateInputClasses}
                         disabled={this.props.disabled}
                         onBlur={this.handleEndDateInputBlur}
                         onChange={this.handleEndDateInputChange}
@@ -267,7 +278,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private isDateValidAndInRange(value: moment.Moment) {
-        return value.isValid() && this.dateIsInRange(value);
+        return value != null && value.isValid() && this.dateIsInRange(value);
     }
 
     private getCurrentDateRange = () => {
@@ -293,11 +304,11 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private isNull(value: moment.Moment) {
-        return value.parsingFlags().nullInput;
+        return value == null || value.parsingFlags().nullInput;
     }
 
     private dateIsInRange(value: moment.Moment) {
-        return value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
+        return value != null && value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
     }
 
     /**
