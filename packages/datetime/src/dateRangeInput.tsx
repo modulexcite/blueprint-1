@@ -39,6 +39,12 @@ export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
     allowSingleDayRange?: boolean;
 
     /**
+     * Whether to change placeholder text to reflect an unbounded date range
+     * when only one of the start date or end date is selected.
+     */
+    allowUnboundedDateRange?: boolean;
+
+    /**
      * Whether the component should be enabled or disabled.
      * @default false
      */
@@ -134,6 +140,7 @@ export interface IDateRangeInputState {
 export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDateRangeInputState> {
     public static defaultProps: IDateRangeInputProps = {
         allowSingleDayRange: false,
+        allowUnboundedDateRange: false,
         disabled: false,
         format: "YYYY-MM-DD",
         invalidDateMessage: "Invalid date",
@@ -208,13 +215,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
         // Placeholders
 
-        const startDatePlaceholder = (this.state.isStartDateInputFocused)
-            ? moment(this.props.minDate).format(format)
-            : "Start date";
-
-        const endDatePlaceholder = (this.state.isEndDateInputFocused)
-            ? moment(this.props.maxDate).format(format)
-            : "End date";
+        const startDatePlaceholder = this.getStartDateInputPlaceholder(startDateString, endDateString);
+        const endDatePlaceholder = this.getEndDateInputPlaceholder(startDateString, endDateString);
 
         // Classes
 
@@ -310,8 +312,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             : [moment(null), moment(null)];
     }
 
-    private shouldInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
-        return !(this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "");
+    private shouldDateInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
+        return this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "";
     }
 
     private isDateValidAndInRange(value: moment.Moment) {
@@ -384,6 +386,26 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                 date.getSeconds(),
                 date.getMilliseconds(),
             ]);
+        }
+    }
+
+    private getStartDateInputPlaceholder = (startDateString: string, endDateString: string) => {
+        if (this.state.isStartDateInputFocused) {
+            return moment(this.props.minDate).format(this.props.format);
+        } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
+            return "All before";
+        } else {
+            return "Start date";
+        }
+    }
+
+    private getEndDateInputPlaceholder = (startDateString: string, endDateString: string) => {
+        if (this.state.isEndDateInputFocused) {
+            return moment(this.props.maxDate).format(this.props.format);
+        } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
+            return "All after";
+        } else {
+            return "End date";
         }
     }
 
