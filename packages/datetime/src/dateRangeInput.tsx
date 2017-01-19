@@ -98,6 +98,12 @@ export interface IDateRangeInputProps extends IDatePickerBaseProps, IProps {
     popoverPosition?: Position;
 
     /**
+     * Whether all the text in each input should be selected on focus.
+     * @default false
+     */
+    selectAllOnFocus?: boolean;
+
+    /**
      * Whether shortcuts to quickly select a range of dates are displayed or not.
      * If `true`, preset shortcuts will be displayed.
      * If `false`, no shortcuts will be displayed.
@@ -136,6 +142,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         openOnFocus: true,
         outOfRangeMessage: "Out of range",
         popoverPosition: Position.BOTTOM_LEFT,
+        selectAllOnFocus: true,
         shortcuts: true,
     };
 
@@ -360,12 +367,12 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             ]);
         }
     }
-    private handleStartDateInputFocus = () => {
-        this.handleGenericInputFocus(this.state.startDateValue, "startDateValueString", "isStartDateInputFocused");
+    private handleStartDateInputFocus = (e: React.FormEvent<HTMLInputElement>) => {
+        this.handleGenericInputFocus(e, this.state.startDateValue, "startDateValueString", "isStartDateInputFocused");
     }
 
-    private handleEndDateInputFocus = () => {
-        this.handleGenericInputFocus(this.state.endDateValue, "endDateValueString", "isEndDateInputFocused");
+    private handleEndDateInputFocus = (e: React.FormEvent<HTMLInputElement>) => {
+        this.handleGenericInputFocus(e, this.state.endDateValue, "endDateValueString", "isEndDateInputFocused");
     }
 
     private handleStartDateInputBlur = () => {
@@ -388,7 +395,13 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         this.handleGenericInputChange(valueString, "endDateValue", "endDateValueString");
     }
 
-    private handleGenericInputFocus = (value: moment.Moment, valueStringKey: string, focusStateKey: string) => {
+    private handleGenericInputFocus =
+        (e: React.FormEvent<HTMLInputElement>, value: moment.Moment, valueStringKey: string, focusStateKey: string) => {
+
+        if (this.props.selectAllOnFocus) {
+            e.currentTarget.select();
+        }
+
         const valueString = this.isNull(value)
             ? ""
             : value.format(this.props.format);
