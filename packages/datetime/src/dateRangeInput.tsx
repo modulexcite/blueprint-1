@@ -11,10 +11,10 @@ import * as React from "react";
 
 import {
     AbstractComponent,
-    // Button,
+    Button,
     Classes,
     // InputGroup,
-    // Intent,
+    Intent,
     IProps,
     Popover,
     Position,
@@ -235,6 +235,23 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             />
         );
 
+        // the "trigger" element contains a button that toggles the popover on
+        // click. this button needs to be visually inside of the input group
+        // along with the start- and end-date input fields, but at the same time
+        // not contained within either input field. this means we can't use a
+        // stock input group, so we have to get creative field.
+        const triggerElement = (
+            <div className="pt-daterangeinput-trigger pt-input-group">
+                <div className="pt-input">
+                    <Button
+                        className="pt-minimal pt-icon-calendar"
+                        intent={Intent.PRIMARY}
+                        onClick={this.handleIconClick}
+                    />
+                </div>
+            </div>
+        );
+
         return (
             <Popover
                 autoFocus={false}
@@ -272,10 +289,12 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                         type="text"
                         value={endDateString}
                     />
+                    {triggerElement}
                 </div>
             </Popover>
         );
     }
+
     private setStartDateInputRef = (el: HTMLElement) => {
         this.startDateInputRef = el;
     }
@@ -367,6 +386,27 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             ]);
         }
     }
+
+    private handleIconClick = (e: React.SyntheticEvent<HTMLElement>) => {
+        if (this.state.isOpen) {
+            if (this.startDateInputRef != null) {
+                this.startDateInputRef.blur();
+            }
+            if (this.endDateInputRef != null) {
+                this.endDateInputRef.blur();
+            }
+        } else {
+            this.setState({ isOpen: true });
+            e.stopPropagation();
+            if (this.startDateInputRef != null) {
+                this.startDateInputRef.blur();
+            }
+            if (this.endDateInputRef != null) {
+                this.endDateInputRef.blur();
+            }
+        }
+    }
+
     private handleStartDateInputFocus = (e: React.FormEvent<HTMLInputElement>) => {
         this.handleGenericInputFocus(e, this.state.startDateValue, "startDateValueString", "isStartDateInputFocused");
     }
