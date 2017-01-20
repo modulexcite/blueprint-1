@@ -21,7 +21,14 @@ import {
     // Utils,
 } from "@blueprintjs/core";
 
-import { DateRange/*, fromMomentToDate*/ } from "./common/dateUtils";
+import {
+    DateRange,
+    fromDateRangeToMomentArray,
+    fromDateToMoment,
+    fromMomentToDate,
+    toDateRange,
+    toFormattedDateString,
+} from "./common/dateUtils";
 import {
     getDefaultMaxDate,
     getDefaultMinDate,
@@ -164,11 +171,11 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         const [defaultStartDateValue, defaultEndDateValue] = this.getDefaultDateRange();
 
         const startDateValue = (this.props.value !== undefined && this.props.value[0] != null)
-            ? this.fromDateToMoment(this.props.value[0])
+            ? fromDateToMoment(this.props.value[0])
             : defaultStartDateValue;
 
         const endDateValue = (this.props.value !== undefined && this.props.value[1] != null)
-            ? this.fromDateToMoment(this.props.value[1])
+            ? fromDateToMoment(this.props.value[1])
             : defaultEndDateValue;
 
         this.state = {
@@ -318,21 +325,21 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     private getDefaultDateRange = () => {
         const defaultDateRange = this.props.defaultValue;
         return (defaultDateRange != null)
-            ? [this.fromDateToMoment(defaultDateRange[0]), this.fromDateToMoment(defaultDateRange[1])]
-            : [moment(null), moment(null)];
+            ? fromDateRangeToMomentArray(defaultDateRange)
+            : fromDateRangeToMomentArray([null, null]);
     }
 
     private getCurrentDateRange = () => {
         const startDate = this.isDateValidAndInRange(this.state.startDateValue)
-                ? this.fromMomentToDate(this.state.startDateValue)
+                ? fromMomentToDate(this.state.startDateValue)
                 : null;
         const endDate = this.isDateValidAndInRange(this.state.endDateValue)
-                ? this.fromMomentToDate(this.state.endDateValue)
+                ? fromMomentToDate(this.state.endDateValue)
                 : null;
         if (endDate < startDate) {
-            return [startDate, null] as DateRange;
+            return toDateRange(startDate, null);
         } else {
-            return [startDate, endDate] as DateRange;
+            return toDateRange(startDate, endDate);
         }
     }
 
@@ -350,7 +357,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     private getStartDateInputPlaceholder = (startDateString: string, endDateString: string) => {
         if (this.state.isStartDateInputFocused) {
-            return moment(this.props.minDate).format(this.props.format);
+            return toFormattedDateString(this.props.minDate, this.props.format);
         } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
             return "All before";
         } else {
@@ -360,7 +367,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     private getEndDateInputPlaceholder = (startDateString: string, endDateString: string) => {
         if (this.state.isEndDateInputFocused) {
-            return moment(this.props.maxDate).format(this.props.format);
+            return toFormattedDateString(this.props.maxDate, this.props.format);
         } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
             return "All after";
         } else {
@@ -384,47 +391,6 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     private dateIsInRange(value: moment.Moment) {
         return value != null && value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
-    }
-
-    // Utilities
-
-    /**
-     * Translate a moment into a Date object, adjusting the moment timezone into the local one.
-     * This is a no-op unless moment-timezone's setDefault has been called.
-     */
-    private fromMomentToDate = (momentDate: moment.Moment) => {
-        if (momentDate == null) {
-            return undefined;
-        } else {
-            return new Date(
-                momentDate.year(),
-                momentDate.month(),
-                momentDate.date(),
-                momentDate.hours(),
-                momentDate.minutes(),
-                momentDate.seconds(),
-                momentDate.milliseconds(),
-            );
-        }
-    }
-    /**
-     * Translate a Date object into a moment, adjusting the local timezone into the moment one.
-     * This is a no-op unless moment-timezone's setDefault has been called.
-     */
-    private fromDateToMoment = (date: Date) => {
-        if (date == null || typeof date === "string") {
-            return moment(date);
-        } else {
-            return moment([
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
-                date.getHours(),
-                date.getMinutes(),
-                date.getSeconds(),
-                date.getMilliseconds(),
-            ]);
-        }
     }
 
     // Callback handlers
@@ -561,8 +527,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         const { format } = this.props;
         const [startDate, endDate] = dateRange;
 
-        const startDateValue = this.fromDateToMoment(startDate);
-        const endDateValue = this.fromDateToMoment(endDate);
+        const startDateValue = fromDateToMoment(startDate);
+        const endDateValue = fromDateToMoment(endDate);
 
         const startDateValueString = (startDate) ? startDateValue.format(format) : "";
         const endDateValueString = (endDate) ? endDateValue.format(format) : "";

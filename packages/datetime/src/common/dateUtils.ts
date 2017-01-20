@@ -104,9 +104,17 @@ export function getDateTime(date: Date, time: Date) {
            time.getHours(), time.getMinutes(), time.getSeconds(), time.getMilliseconds());
 }
 
+export function toFormattedDateString(date: Date, format: string) {
+    return moment(date).format(format);
+}
+
+export function toDateRange(startDate: Date, endDate: Date) {
+    return [startDate, endDate] as DateRange;
+}
+
 /**
- * Translate a moment into a Date object, adjusting the moment timezone into the local one.
- * This is a no-op unless moment-timezone's setDefault has been called.
+ * Translate a moment into a Date object, adjusting the moment timezone into the
+ * local one (a no-op unless moment-timezone's setDefault has been called).
  */
 export function fromMomentToDate(momentDate: moment.Moment) {
     if (momentDate == null) {
@@ -122,4 +130,39 @@ export function fromMomentToDate(momentDate: moment.Moment) {
             momentDate.milliseconds(),
         );
     }
+}
+
+/**
+ * Translate a Date object into a moment, adjusting the local timezone into the
+ * moment one (a no-op unless moment-timezone's setDefault has been called).
+ */
+export function fromDateToMoment(date: Date) {
+    if (date == null || typeof date === "string") {
+        return moment(date);
+    } else {
+        return moment([
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            date.getHours(),
+            date.getMinutes(),
+            date.getSeconds(),
+            date.getMilliseconds(),
+        ]);
+    }
+}
+
+/**
+ * Translate a DateRange into a two-element array of moments, adjusting the
+ * local timezone into the moment one (a no-op unless moment-timezone's
+ * setDefault has been called).
+ */
+export function fromDateRangeToMomentArray(dateRange: DateRange) {
+    if (dateRange == null) {
+        return null;
+    }
+    return [
+        fromDateToMoment(dateRange[0]),
+        fromDateToMoment(dateRange[1]),
+    ];
 }
