@@ -246,9 +246,13 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             "pt-intent-danger": isEndDateInputInErrorState,
         });
 
+        // null isn't handled well for minDate and maxDate in DateRangePicker,
+        // so coerce to undefined if necessary
         const popoverContent = (
             <DateRangePicker
                 allowSingleDayRange={this.props.allowSingleDayRange}
+                maxDate={this.props.maxDate || undefined}
+                minDate={this.props.minDate || undefined}
                 onChange={this.handleDateRangeChange}
                 shortcuts={this.props.shortcuts}
                 value={this.getCurrentDateRange()}
@@ -361,8 +365,9 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private getStartDateInputPlaceholder = (startDateString: string, endDateString: string) => {
-        if (this.state.isStartDateInputFocused) {
-            return toFormattedDateString(this.props.minDate, this.props.format);
+        const { minDate } = this.props;
+        if (this.state.isStartDateInputFocused && minDate != null) {
+            return toFormattedDateString(minDate, this.props.format);
         } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
             return "All before";
         } else {
@@ -371,8 +376,9 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private getEndDateInputPlaceholder = (startDateString: string, endDateString: string) => {
-        if (this.state.isEndDateInputFocused) {
-            return toFormattedDateString(this.props.maxDate, this.props.format);
+        const { maxDate } = this.props;
+        if (this.state.isEndDateInputFocused && maxDate != null) {
+            return toFormattedDateString(maxDate, this.props.format);
         } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
             return "All after";
         } else {
@@ -391,7 +397,11 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     }
 
     private dateIsInRange(value: moment.Moment) {
-        return value != null && value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
+        const { minDate, maxDate } = this.props;
+        if (minDate == null || maxDate == null) {
+            return true;
+        }
+        return value != null && value.isBetween(minDate, maxDate, "day", "[]");
     }
 
     // Callback handlers
