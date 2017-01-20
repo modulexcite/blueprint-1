@@ -193,16 +193,6 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     public render() {
         const { format } = this.props;
 
-        // Date strings
-
-        const startDateString = (this.state.isStartDateInputFocused)
-            ? this.state.startDateValueString
-            : this.getDateStringForDisplay(this.state.startDateValue);
-
-        const endDateString = (this.state.isEndDateInputFocused)
-            ? this.state.endDateValueString
-            : this.getDateStringForDisplay(this.state.endDateValue);
-
         // Date values
 
         const startDateValue = (this.state.isStartDateInputFocused)
@@ -213,6 +203,18 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             ? moment(this.state.endDateValueString, format)
             : this.state.endDateValue;
 
+        // Date strings
+
+        const startDateString = (this.state.isStartDateInputFocused)
+            ? this.state.startDateValueString
+            : this.getDateStringForDisplay(this.state.startDateValue);
+
+        const endDateString = (this.state.isEndDateInputFocused)
+            ? this.state.endDateValueString
+            : (endDateValue.isBefore(startDateValue) // also need to consider what the last field edited was
+                ? "Invalid end date"
+                : this.getDateStringForDisplay(this.state.endDateValue));
+
         // Placeholders
 
         const startDatePlaceholder = this.getStartDateInputPlaceholder(startDateString, endDateString);
@@ -220,13 +222,17 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
         // Classes
 
-        const startDateInputClasses = classNames(Classes.INPUT, {
-            "pt-intent-danger": this.shouldInputHaveErrorClass(startDateValue, startDateString),
-        });
+        const doesStartDateExceedEndDate = startDateValue.isAfter(endDateValue);
 
-        const endDateInputClasses = classNames(Classes.INPUT, {
-            "pt-intent-danger": this.shouldInputHaveErrorClass(endDateValue, endDateString),
-        });
+        const isStartDateInputInErrorState =
+            !(this.isDateValidAndInRange(startDateValue) || this.isNull(startDateValue) || startDateString === "");
+        const isEndDateInputInErrorState = (
+            !(this.isDateValidAndInRange(endDateValue) || this.isNull(endDateValue) || endDateString === "")
+            || (this.state.isEndDateInputFocused && doesStartDateExceedEndDate))
+            || endDateValue.isBefore(startDateValue);
+
+        const startDateInputClasses = classNames(Classes.INPUT, { "pt-intent-danger": isStartDateInputInErrorState });
+        const endDateInputClasses = classNames(Classes.INPUT, { "pt-intent-danger": isEndDateInputInErrorState });
 
         const popoverContent = (
             <DateRangePicker
@@ -312,14 +318,6 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             : [moment(null), moment(null)];
     }
 
-    private shouldDateInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
-        return this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "";
-    }
-
-    private isDateValidAndInRange(value: moment.Moment) {
-        return value != null && value.isValid() && this.dateIsInRange(value);
-    }
-
     private getCurrentDateRange = () => {
         const startDate = this.isDateValidAndInRange(this.state.startDateValue)
                 ? this.fromMomentToDate(this.state.startDateValue)
@@ -327,7 +325,11 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         const endDate = this.isDateValidAndInRange(this.state.endDateValue)
                 ? this.fromMomentToDate(this.state.endDateValue)
                 : null;
-        return [startDate, endDate] as DateRange;
+        if (endDate < startDate) {
+            return [startDate, null] as DateRange;
+        } else {
+            return [startDate, endDate] as DateRange;
+        }
     }
 
     private getDateStringForDisplay = (value: moment.Moment) => {
@@ -340,6 +342,34 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         } else {
             return value.format(this.props.format);
         }
+    }
+
+    private getStartDateInputPlaceholder = (startDateString: string, endDateString: string) => {
+        if (this.state.isStartDateInputFocused) {
+            return moment(this.props.minDate).format(this.props.format);
+        } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
+            return "All before";
+        } else {
+            return "Start date";
+        }
+    }
+
+    private getEndDateInputPlaceholder = (startDateString: string, endDateString: string) => {
+        if (this.state.isEndDateInputFocused) {
+            return moment(this.props.maxDate).format(this.props.format);
+        } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
+            return "All after";
+        } else {
+            return "End date";
+        }
+    }
+
+    private shouldDateInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
+        return this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "";
+    }
+
+    private isDateValidAndInRange(value: moment.Moment) {
+        return value != null && value.isValid() && this.dateIsInRange(value);
     }
 
     private isNull(value: moment.Moment) {
@@ -389,25 +419,6 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         }
     }
 
-    private getStartDateInputPlaceholder = (startDateString: string, endDateString: string) => {
-        if (this.state.isStartDateInputFocused) {
-            return moment(this.props.minDate).format(this.props.format);
-        } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
-            return "All before";
-        } else {
-            return "Start date";
-        }
-    }
-
-    private getEndDateInputPlaceholder = (startDateString: string, endDateString: string) => {
-        if (this.state.isEndDateInputFocused) {
-            return moment(this.props.maxDate).format(this.props.format);
-        } else if (this.props.allowUnboundedDateRange && (startDateString || endDateString)) {
-            return "All after";
-        } else {
-            return "End date";
-        }
-    }
 
     private handleIconClick = (e: React.SyntheticEvent<HTMLElement>) => {
         if (this.state.isOpen) {
@@ -525,7 +536,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             }
             // TODO: Utils.safeInvoke(this.props.onChange, fromMomentToDate(value));
         } else {
-            this.setState({ [valueStringKey]: valueString });
+            this.setState({ [valueKey]: value, [valueStringKey]: valueString });
         }
     }
 
