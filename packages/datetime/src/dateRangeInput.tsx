@@ -21,6 +21,7 @@ import {
     // Utils,
 } from "@blueprintjs/core";
 
+import * as DateClasses from "./common/classes";
 import {
     DateRange,
     fromDateRangeToMomentArray,
@@ -238,8 +239,12 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
             || (this.state.isEndDateInputFocused && doesStartDateExceedEndDate))
             || endDateValue.isBefore(startDateValue);
 
-        const startDateInputClasses = classNames(Classes.INPUT, { "pt-intent-danger": isStartDateInputInErrorState });
-        const endDateInputClasses = classNames(Classes.INPUT, { "pt-intent-danger": isEndDateInputInErrorState });
+        const startDateInputClasses = classNames(Classes.INPUT, DateClasses.DATERANGEINPUT_FIELD, {
+            "pt-intent-danger": isStartDateInputInErrorState,
+        });
+        const endDateInputClasses = classNames(Classes.INPUT, DateClasses.DATERANGEINPUT_FIELD, {
+            "pt-intent-danger": isEndDateInputInErrorState,
+        });
 
         const popoverContent = (
             <DateRangePicker
@@ -256,7 +261,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         // not contained within either input field. this means we can't use a
         // stock input group, so we have to get creative field.
         const triggerElement = (
-            <div className="pt-daterangeinput-trigger pt-input-group">
+            <div className={`${DateClasses.DATERANGEINPUT_TRIGGER} pt-input-group`}>
                 <div className="pt-input">
                     <Button
                         className="pt-minimal pt-icon-calendar"
@@ -275,7 +280,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
                 inline={true}
                 isOpen={this.state.isOpen}
                 onClose={this.handleClosePopover}
-                popoverClassName={"pt-daterangeinput-popover"}
+                popoverClassName={DateClasses.DATERANGEINPUT_POPOVER}
                 position={Position.BOTTOM_LEFT}
                 // useSmartArrowPositioning={false} // TODO: move the arrow based on which field is focused?
             >

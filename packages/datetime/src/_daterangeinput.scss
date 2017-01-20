@@ -13,6 +13,24 @@ Date range input
 Styleguide components.datetime.daterangeinput
 */
 
+.pt-daterangeinput {
+  position: relative;
+}
+
+.pt-daterangeinput-field {
+  // fields with an intent need to be visually above other fields, so their
+  // entire border will be colored
+  &[class*="pt-intent-"] {
+    z-index: 1;
+  }
+
+  // this style exists for default .pt-control-groups already, but we restate it
+  // here to decouple that stylesheet from this one.
+  &:focus {
+    z-index: 2;
+  }
+}
+
 .pt-daterangeinput-trigger {
 
   // .pt-input-group already styles immediate-children .pt-buttons with
