@@ -303,6 +303,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         );
     }
 
+    // Input refs
+
     private setStartDateInputRef = (el: HTMLElement) => {
         this.startDateInputRef = el;
     }
@@ -310,6 +312,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     private setEndDateInputRef = (el: HTMLElement) => {
         this.endDateInputRef = el;
     }
+
+    // Getters
 
     private getDefaultDateRange = () => {
         const defaultDateRange = this.props.defaultValue;
@@ -364,6 +368,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         }
     }
 
+    // Boolean functions
+
     private shouldDateInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
         return this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "";
     }
@@ -379,6 +385,8 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
     private dateIsInRange(value: moment.Moment) {
         return value != null && value.isBetween(this.props.minDate, this.props.maxDate, "day", "[]");
     }
+
+    // Utilities
 
     /**
      * Translate a moment into a Date object, adjusting the moment timezone into the local one.
@@ -419,6 +427,7 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
         }
     }
 
+    // Callback handlers
 
     private handleIconClick = (e: React.SyntheticEvent<HTMLElement>) => {
         if (this.state.isOpen) {
