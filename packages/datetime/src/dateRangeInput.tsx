@@ -377,10 +377,6 @@ export class DateRangeInput extends AbstractComponent<IDateRangeInputProps, IDat
 
     // Boolean functions
 
-    private shouldDateInputHaveErrorClass = (value: moment.Moment, dateString: string) => {
-        return this.isDateValidAndInRange(value) || this.isNull(value) || dateString === "";
-    }
-
     private isDateValidAndInRange(value: moment.Moment) {
         return value != null && value.isValid() && this.dateIsInRange(value);
     }
